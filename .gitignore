@@ -1,2 +1,8 @@
 .idea
 cmake-build-debug
+Plugin
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+lib
