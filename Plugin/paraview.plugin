@@ -1,6 +1,0 @@
-NAME
-  CityJSONReader
-DESCRIPTION
-  A plugin that allows ParaView to load CityJSON files
-REQUIRES_MODULES
-  VTK::IOImage

@@ -1,6 +1,6 @@
 .idea
 cmake-build-debug
-Plugin
+Reader
 CMakeFiles
 CMakeCache.txt
 cmake_install.cmake
