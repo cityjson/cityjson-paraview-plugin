@@ -1,15 +1,12 @@
-
 <ParaViewPlugin>
     <ServerManagerConfiguration>
         <ProxyGroup name="sources">
-            <SourceProxy name="CityJSONReader"
-                         class="vtkCityJSONReader"
-                         label="CityJSON reader">
-                <Documentation
-                        short_help="Read a CityJSON file."
-                        long_help="Read a CityJSON file into 3D Geometry.">
-                    The CityJSON reader reads .json files in CityJSON format into the respective 3D geometry for ParaView.
+            <SourceProxy name="MyCityJSONReader" class="vtkMyCityJSONReader" label="MyCityJSON">
+
+                <Documentation long_help="Does stuff." short_help="Does more stuff.">
+                    Reads CityJSON files
                 </Documentation>
+
                 <StringVectorProperty
                         name="FileName"
                         animateable="0"
@@ -18,13 +15,14 @@
                         panel_visibility="never">
                     <FileListDomain name="files"/>
                     <Documentation>
-                        This property specifies the file name for the PNG reader.
+                        This property specifies the file name for the CityJSON reader.
                     </Documentation>
                 </StringVectorProperty>
 
                 <Hints>
-                    <ReaderFactory extensions="json" file_description="CityJSON Files" />
+                    <ReaderFactory extensions="json" file_description="CityJSON files" />
                 </Hints>
+
             </SourceProxy>
         </ProxyGroup>
     </ServerManagerConfiguration>

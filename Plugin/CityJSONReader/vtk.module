@@ -1,0 +1,14 @@
+NAME
+  VTK::IOCityJSON
+LIBRARY_NAME
+  vtkIOCityJSON
+DEPENDS
+  VTK::CommonDataModel
+  VTK::CommonExecutionModel
+  VTK::IOCore
+  VTK::jsoncpp
+PRIVATE_DEPENDS
+  VTK::CommonCore
+  VTK::FiltersCore
+TEST_DEPENDS
+  VTK::TestingCore

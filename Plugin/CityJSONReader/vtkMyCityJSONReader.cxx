@@ -2,7 +2,7 @@
 // Created by maarten on 11-08-20.
 //
 
-#include "vtkCityJSONReader.h"
+#include "vtkMyCityJSONReader.h"
 
 // VTK Includes
 #include "vtkAbstractArray.h"
@@ -10,7 +10,7 @@
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
 #include "vtkDoubleArray.h"
-//#include "vtkCityJSONFeature.h"
+#include "vtkMyCityJSONFeature.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkIntArray.h"
@@ -27,14 +27,13 @@
 #include <iostream>
 #include <sstream>
 
-vtkStandardNewMacro(vtkCityJSONReader);
+
+vtkStandardNewMacro(vtkMyCityJSONReader);
 
 //----------------------------------------------------------------------------
-class vtkCityJSONReader::CityJSONReaderInternal
-{
+class vtkMyCityJSONReader::CityJSONReaderInternal {
 public:
-    typedef struct
-    {
+    typedef struct {
         std::string Name;
         vtkVariant Value;
     } CityJSONProperty;
@@ -63,7 +62,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-void vtkCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value& root, vtkPolyData* output, bool outlinePolygons, const char* serializedPropertiesArrayName)
+void vtkMyCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value& root, vtkPolyData* output, bool outlinePolygons, const char* serializedPropertiesArrayName)
 {
     // Initialize geometry containers
     vtkNew<vtkPoints> points;
@@ -164,7 +163,7 @@ void vtkCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value& roo
             Json::Value featureNode = rootFeatures[i];
             Json::Value propertiesNode = featureNode["properties"];
             this->ParseFeatureProperties(propertiesNode, properties, serializedPropertiesArrayName);
-            vtkNew<vtkCityJSONFeature> feature;
+            vtkNew<vtkMyCityJSONFeature> feature;
             feature->SetOutlinePolygons(outlinePolygons);
             feature->ExtractCityJSONFeature(featureNode, output);
             this->InsertFeatureProperties(output, properties);
@@ -174,7 +173,7 @@ void vtkCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value& roo
     {
         // Process single feature
         this->ParseFeatureProperties(root, properties, serializedPropertiesArrayName);
-        vtkNew<vtkCityJSONFeature> feature;
+        vtkNew<vtkMyCityJSONFeature> feature;
         feature->SetOutlinePolygons(outlinePolygons);
 
         // Next call adds (exactly) one cell to the polydata
@@ -188,8 +187,10 @@ void vtkCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value& roo
     }
 }
 
+
+
 //----------------------------------------------------------------------------
-int vtkCityJSONReader::CityJSONReaderInternal::CanParseFile(const char* filename, Json::Value& root)
+int vtkMyCityJSONReader::CityJSONReaderInternal::CanParseFile(const char* filename, Json::Value& root)
 {
     if (!filename)
     {
@@ -211,7 +212,7 @@ int vtkCityJSONReader::CityJSONReaderInternal::CanParseFile(const char* filename
 
     std::string formattedErrors;
 
-    // parse the entire CityJSON data into the Json::Value root
+    // parse the entire cityJSON data into the Json::Value root
     bool parsedSuccess = parseFromStream(builder, file, &root, &formattedErrors);
 
     if (!parsedSuccess)
@@ -225,7 +226,7 @@ int vtkCityJSONReader::CityJSONReaderInternal::CanParseFile(const char* filename
 }
 
 //----------------------------------------------------------------------------
-int vtkCityJSONReader::CityJSONReaderInternal::CanParseString(char* input, Json::Value& root)
+int vtkMyCityJSONReader::CityJSONReaderInternal::CanParseString(char* input, Json::Value& root)
 {
     if (!input)
     {
@@ -240,7 +241,7 @@ int vtkCityJSONReader::CityJSONReaderInternal::CanParseString(char* input, Json:
 
     std::string formattedErrors;
 
-    // parse the entire CityJSON data into the Json::Value root
+    // parse the entire cityJSON data into the Json::Value root
     bool parsedSuccess = reader->parse(input, input + strlen(input), &root, &formattedErrors);
 
     if (!parsedSuccess)
@@ -254,7 +255,7 @@ int vtkCityJSONReader::CityJSONReaderInternal::CanParseString(char* input, Json:
 }
 
 //----------------------------------------------------------------------------
-void vtkCityJSONReader::CityJSONReaderInternal::ParseFeatureProperties(
+void vtkMyCityJSONReader::CityJSONReaderInternal::ParseFeatureProperties(
         const Json::Value& propertiesNode, std::vector<CityJSONProperty>& featureProperties,
         const char* serializedPropertiesArrayName)
 {
@@ -323,7 +324,7 @@ void vtkCityJSONReader::CityJSONReaderInternal::ParseFeatureProperties(
 }
 
 //----------------------------------------------------------------------------
-void vtkCityJSONReader::CityJSONReaderInternal::InsertFeatureProperties(
+void vtkMyCityJSONReader::CityJSONReaderInternal::InsertFeatureProperties(
         vtkPolyData* polyData, const std::vector<CityJSONProperty>& featureProperties)
 {
     std::vector<CityJSONProperty>::const_iterator iter = featureProperties.begin();
@@ -355,8 +356,7 @@ void vtkCityJSONReader::CityJSONReaderInternal::InsertFeatureProperties(
 }
 
 //----------------------------------------------------------------------------
-vtkCityJSONReader::vtkCityJSONReader()
-{
+vtkMyCityJSONReader::vtkMyCityJSONReader() {
     this->FileName = nullptr;
     this->StringInput = nullptr;
     this->StringInputMode = false;
@@ -369,15 +369,13 @@ vtkCityJSONReader::vtkCityJSONReader()
 }
 
 //----------------------------------------------------------------------------
-vtkCityJSONReader::~vtkCityJSONReader()
-{
+vtkMyCityJSONReader::~vtkMyCityJSONReader() {
     delete[] FileName;
-    delete[] StringInput;
     delete Internal;
 }
 
 //----------------------------------------------------------------------------
-void vtkCityJSONReader::AddFeatureProperty(const char* name, vtkVariant& typeAndDefaultValue)
+void vtkMyCityJSONReader::AddFeatureProperty(const char* name, vtkVariant& typeAndDefaultValue)
 {
     CityJSONReaderInternal::CityJSONProperty property;
 
@@ -407,7 +405,7 @@ void vtkCityJSONReader::AddFeatureProperty(const char* name, vtkVariant& typeAnd
 }
 
 //----------------------------------------------------------------------------
-int vtkCityJSONReader::RequestData(vtkInformation* vtkNotUsed(request),
+int vtkMyCityJSONReader::RequestData(vtkInformation* vtkNotUsed(request),
                                   vtkInformationVector** vtkNotUsed(request), vtkInformationVector* outputVector)
 {
     // Get the info object
@@ -454,8 +452,7 @@ int vtkCityJSONReader::RequestData(vtkInformation* vtkNotUsed(request),
 }
 
 //----------------------------------------------------------------------------
-void vtkCityJSONReader::PrintSelf(ostream& os, vtkIndent indent)
-{
+void vtkMyCityJSONReader::PrintSelf(ostream &os, vtkIndent indent) {
     Superclass::PrintSelf(os, indent);
     os << "vtkCityJSONReader" << std::endl;
     os << "Filename: " << this->FileName << std::endl;

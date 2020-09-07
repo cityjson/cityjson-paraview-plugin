@@ -1,54 +1,24 @@
-//
-// Created by maarten on 11-08-20.
-//
+#ifndef vtkMyCityJSONReader_h
+#define vtkMyCityJSONReader_h
 
-/**
- * @class   vtkCityJSONReader
- * @brief   Convert CityJSON format to vtkPolyData
- *
- * Outputs a vtkPolyData from the input
- * CityJSON Data (http://www.cityjson.org)
- */
-
-#ifndef CITYJSONREADER_VTKCITYJSONREADER_H
-#define CITYJSONREADER_VTKCITYJSONREADER_H
-
-// VTK Includes
+#include "vtkIOCityJSONModule.h" // for export macro
 #include "vtkPolyDataAlgorithm.h"
 
 class vtkPolyData;
 
-class VTKIOCITYJSON_EXPORT vtkCityJSONReader : public vtkPolyDataAlgorithm
+class VTKIOCITYJSON_EXPORT vtkMyCityJSONReader : public vtkPolyDataAlgorithm
 {
 public:
-    static vtkCityJSONReader* New();
-    vtkTypeMacro(vtkCityJSONReader, vtkPolyDataAlgorithm);
-    virtual void PrintSelf(ostream& os, vtkIndent indent) override;
+    static vtkMyCityJSONReader* New();
+    vtkTypeMacro(vtkMyCityJSONReader, vtkPolyDataAlgorithm);
+    void PrintSelf(ostream& os, vtkIndent indent) override;
 
     //@{
     /**
-     * Accessor for name of the file that will be opened on WriteData
+     * Specify file name of the CityGML data file to read.
      */
     vtkSetStringMacro(FileName);
     vtkGetStringMacro(FileName);
-    //@}
-
-    //@{
-    /**
-     * String used as data input (instead of file) when StringInputMode is enabled
-     */
-    vtkSetStringMacro(StringInput);
-    vtkGetStringMacro(StringInput);
-    //@}
-
-    //@{
-    /**
-     * Set/get whether to use StringInput instead of reading input from file
-     * The default is off
-     */
-    vtkSetMacro(StringInputMode, bool);
-    vtkGetMacro(StringInputMode, bool);
-    vtkBooleanMacro(StringInputMode, bool);
     //@}
 
     //@{
@@ -84,36 +54,31 @@ public:
     //@}
 
     /**
-     * Specify feature property to read in with geometry objects
-     * Note that defaultValue specifies both type & value
-     */
+   * Specify feature property to read in with geometry objects
+   * Note that defaultValue specifies both type & value
+   */
     void AddFeatureProperty(const char* name, vtkVariant& typeAndDefaultValue);
 
 protected:
-    vtkCityJSONReader();
-    ~vtkCityJSONReader() override;
+    vtkMyCityJSONReader();
+    ~vtkMyCityJSONReader() override;
 
-    //@{
-    /**
-     * Core implementation of the
-     */
     int RequestData(vtkInformation* request, vtkInformationVector** inputVector,
                     vtkInformationVector* outputVector) override;
+
     char* FileName;
     char* StringInput;
     bool StringInputMode;
     bool TriangulatePolygons;
     bool OutlinePolygons;
     char* SerializedPropertiesArrayName;
-    //@}
 
 private:
     class CityJSONReaderInternal;
     CityJSONReaderInternal* Internal;
 
-    vtkCityJSONReader(const vtkCityJSONReader&) = delete;
-    void operator=(const vtkCityJSONReader&) = delete;
+    vtkMyCityJSONReader(const vtkMyCityJSONReader&) = delete;
+    void operator=(const vtkMyCityJSONReader&) = delete;
 };
 
-#endif //CITYJSONREADER_VTKCITYJSONREADER_H
-
+#endif
