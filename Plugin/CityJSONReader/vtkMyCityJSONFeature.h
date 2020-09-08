@@ -44,6 +44,10 @@ vtkTypeMacro(vtkMyCityJSONFeature, vtkDataObject);
  */
     void ExtractCityJSONFeature(const Json::Value &root, vtkPolyData *outputData);
 
+
+    //CityJSON
+    void ExtractVertices(const Json::Value &vertices, vtkPolyData *outputData);
+
 protected:
     vtkMyCityJSONFeature();
 
@@ -54,6 +58,8 @@ protected:
  * from which the geometry and properties are to be extracted
  */
     Json::Value featureRoot;
+
+    Json::Value verticesRoot;
 
 /**
  * Id of current CityJSON feature being parsed

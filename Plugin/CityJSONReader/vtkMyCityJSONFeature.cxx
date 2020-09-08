@@ -83,8 +83,7 @@ bool vtkMyCityJSONFeature::CreatePoint(const Json::Value &coordinates, double po
 }
 
 //----------------------------------------------------------------------------
-vtkPolyData *vtkMyCityJSONFeature::ExtractPoint(
-        const Json::Value &coordinates, vtkPolyData *outputData) {
+vtkPolyData *vtkMyCityJSONFeature::ExtractPoint(const Json::Value &coordinates, vtkPolyData *outputData) {
     // Check if Coordinates corresponds to Single Point
     if (!IsPoint(coordinates)) {
         vtkErrorMacro(<< "Wrong data format for a point!");
@@ -105,15 +104,14 @@ vtkPolyData *vtkMyCityJSONFeature::ExtractPoint(
     verts->InsertNextCell(PID_SIZE, &pid);
 
     vtkAbstractArray *array = outputData->GetCellData()->GetAbstractArray("feature-id");
-    vtkStringArray *ids = vtkArrayDownCast<vtkStringArray>(array);
+    auto *ids = vtkArrayDownCast<vtkStringArray>(array);
     ids->InsertNextValue(this->FeatureId);
 
     return outputData;
 }
 
 //----------------------------------------------------------------------------
-vtkPolyData *vtkMyCityJSONFeature::ExtractMultiPoint(
-        const Json::Value &coordinates, vtkPolyData *outputData) {
+vtkPolyData *vtkMyCityJSONFeature::ExtractMultiPoint(const Json::Value &coordinates, vtkPolyData *outputData) {
     // Check if Coordinates corresponds to Multi Points
     if (!IsMultiPoint(coordinates)) {
         vtkErrorMacro(<< "Wrong data format for a Multi Point!");
@@ -259,13 +257,21 @@ vtkPolyData *vtkMyCityJSONFeature::ExtractMultiPolygon(const Json::Value &coordi
         return nullptr;
     }
 
-    for (Json::Value::ArrayIndex i = 0; i < coordinateArray.size(); i++) {
+    for (const auto &i : coordinateArray) {
         // Extract polygon into different polyData and append into a common polyData using the
         // appendPolyData Filter
-        this->ExtractPolygon(coordinateArray[i], outputData);
+        this->ExtractPolygon(i, outputData);
     }
 
     return outputData;
+}
+
+void vtkMyCityJSONFeature::ExtractVertices(const Json::Value &vertices, vtkPolyData *outputData) {
+    this->verticesRoot = vertices;
+
+    for (Json::Value vertex : vertices){
+        this->ExtractPoint(vertex, outputData);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -420,13 +426,12 @@ bool vtkMyCityJSONFeature::IsPoint(const Json::Value &root) {
         return false;
     }
 
-    if (!(root.size() > 0 && root.size() < 4)) {
+    if (!(!root.empty() && root.size() < 4)) {
         vtkErrorMacro(<< "Expected 3 or less dimension values at " << root << " for point");
         return false;
     }
 
-    for (Json::Value::ArrayIndex i = 0; i < root.size(); i++) {
-        Json::Value child = root[i];
+    for (const auto &child : root) {
         if (!child.isNumeric()) {
             vtkErrorMacro(<< "Value not Numeric as expected at " << child);
             return false;
