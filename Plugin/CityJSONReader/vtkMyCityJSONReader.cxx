@@ -23,9 +23,7 @@
 #include "vtksys/FStream.hxx"
 
 // C++ includes
-#include <fstream>
 #include <iostream>
-#include <sstream>
 
 
 vtkStandardNewMacro(vtkMyCityJSONReader);
@@ -51,13 +49,8 @@ public:
 
     // Verify if string can be read by the parser
     // If exists, parse into Jsoncpp data structure
-    int CanParseString(char *input, Json::Value &root);
+    static int CanParseString(char *input, Json::Value &root);
 
-    // Extract property values from json node
-    void ParseFeatureProperties(const Json::Value &propertiesNode, std::vector<CityJSONProperty> &properties,
-                                const char *serializedPropertiesArrayName);
-
-    void InsertFeatureProperties(vtkPolyData *polyData, const std::vector<CityJSONProperty> &featureProperties);
 };
 
 //----------------------------------------------------------------------------
@@ -76,11 +69,11 @@ void vtkMyCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &r
     vtkNew<vtkCellArray> polys;
     output->SetPolys(polys);
 
-    // Initialize feature-id array
-    vtkStringArray *featureIdArray = vtkStringArray::New();
-    featureIdArray->SetName("feature-id");
-    output->GetCellData()->AddArray(featureIdArray);
-    featureIdArray->Delete();
+    // Initialize vertex-id array
+    vtkIntArray *vertexIdArray = vtkIntArray::New();
+    vertexIdArray->SetName("vertex-id");
+    output->GetCellData()->AddArray(vertexIdArray);
+    vertexIdArray->Delete();
 
     // Initialize properties arrays
     if (serializedPropertiesArrayName) {
@@ -135,59 +128,26 @@ void vtkMyCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &r
         vtkGenericWarningMacro(<< "ParseRoot: \"type\" is not \"CityJSON\"");
     }
 
+    vtkNew<vtkMyCityJSONFeature> feature;
+
     // Parse vertices
     Json::Value rootVertices = root["vertices"];
     if (!rootVertices.isArray()) {
         vtkGenericWarningMacro(<< "ParseRoot: \"vertices\" not of type \"array\"");
     } else {
-        vtkNew<vtkMyCityJSONFeature> feature;
         feature->ExtractVertices(rootVertices, output);
+
     }
 
-
-//    // Parse features
-//    Json::Value rootFeatures;
-//    std::string strRootType = rootType.asString();
-//    std::vector<CityJSONProperty> properties;
-//    if ("FeatureCollection" == strRootType) {
-//        rootFeatures = root["features"];
-//        if (rootFeatures.isNull()) {
-//            vtkGenericWarningMacro(<< "ParseRoot: Missing \"features\" node");
-//            return;
-//        }
-//
-//        if (!rootFeatures.isArray()) {
-//            vtkGenericWarningMacro(<< "ParseRoot: features node is not an array");
-//            return;
-//        }
-//
-//        CityJSONProperty property;
-//        for (auto featureNode : rootFeatures) {
-//            // Append extracted geometry to existing outputData
-//
-//            Json::Value propertiesNode = featureNode["properties"];
-//            this->ParseFeatureProperties(propertiesNode, properties, serializedPropertiesArrayName);
-//
-//            vtkNew<vtkMyCityJSONFeature> feature;
-//
-//            feature->SetOutlinePolygons(outlinePolygons);
-//            feature->ExtractCityJSONFeature(featureNode, output);
-//
-//            this->InsertFeatureProperties(output, properties);
-//        }
-//    } else if ("Feature" == strRootType) {
-//        // Process single feature
-//        this->ParseFeatureProperties(root, properties, serializedPropertiesArrayName);
-//        vtkNew<vtkMyCityJSONFeature> feature;
-//        feature->SetOutlinePolygons(outlinePolygons);
-//
-//        // Next call adds (exactly) one cell to the polydata
-//        feature->ExtractCityJSONFeature(root, output);
-//        // Next call adds (exactly) one tuple to the polydata's cell data
-//        this->InsertFeatureProperties(output, properties);
-//    } else {
-//        vtkGenericWarningMacro(<< "ParseRoot: do not support root type \"" << strRootType << "\"");
-//    }
+    // Parse polygons
+    Json::Value rootCityObjects = root["CityObjects"];
+    if (rootCityObjects.isNull()) {
+        vtkGenericWarningMacro(<< "ParseRoot: Missing \"CityObjects\" node");
+    } else {
+        for (Json::Value cityObject : rootCityObjects) {  // GUID_Something
+            feature->ConnectTheDots(cityObject, output);
+        }
+    }
 }
 
 
@@ -250,98 +210,6 @@ int vtkMyCityJSONReader::CityJSONReaderInternal::CanParseString(char *input, Jso
 }
 
 //----------------------------------------------------------------------------
-void vtkMyCityJSONReader::CityJSONReaderInternal::ParseFeatureProperties(
-        const Json::Value &propertiesNode, std::vector<CityJSONProperty> &featureProperties,
-        const char *serializedPropertiesArrayName) {
-    featureProperties.clear();
-
-    CityJSONProperty spec;
-    CityJSONProperty property;
-    std::vector<CityJSONProperty>::iterator iter = this->PropertySpecs.begin();
-    for (; iter != this->PropertySpecs.end(); ++iter) {
-        spec = *iter;
-        property.Name = spec.Name;
-
-        Json::Value propertyNode = propertiesNode[spec.Name];
-        if (propertyNode.isNull()) {
-            property.Value = spec.Value;
-            featureProperties.push_back(property);
-            continue;
-        }
-
-        // (else)
-        switch (spec.Value.GetType()) {
-            case VTK_BIT:
-                property.Value = vtkVariant(propertyNode.asBool());
-                break;
-
-            case VTK_DOUBLE:
-                property.Value = vtkVariant(propertyNode.asDouble());
-                break;
-
-            case VTK_INT:
-                property.Value = vtkVariant(propertyNode.asInt());
-                break;
-
-            case VTK_STRING:
-                property.Value = vtkVariant(propertyNode.asString());
-                break;
-        }
-
-        featureProperties.push_back(property);
-    }
-
-    // Add CityJSON string if enabled
-    if (serializedPropertiesArrayName) {
-        property.Name = serializedPropertiesArrayName;
-
-        Json::StreamWriterBuilder builder;
-        builder["commentStyle"] = "None";
-        builder["indentation"] = "";
-        std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-
-        std::stringstream stream;
-        writer->write(propertiesNode, &stream);
-        std::string propString = stream.str();
-
-        if (!propString.empty() && *propString.rbegin() == '\n') {
-            propString.resize(propString.size() - 1);
-        }
-        property.Value = vtkVariant(propString);
-        featureProperties.push_back(property);
-    }
-}
-
-//----------------------------------------------------------------------------
-void vtkMyCityJSONReader::CityJSONReaderInternal::InsertFeatureProperties(
-        vtkPolyData *polyData, const std::vector<CityJSONProperty> &featureProperties) {
-    std::vector<CityJSONProperty>::const_iterator iter = featureProperties.begin();
-    for (; iter != featureProperties.end(); ++iter) {
-        std::string name = iter->Name;
-        vtkVariant value = iter->Value;
-
-        vtkAbstractArray *array = polyData->GetCellData()->GetAbstractArray(name.c_str());
-        switch (array->GetDataType()) {
-            case VTK_BIT:
-                vtkArrayDownCast<vtkBitArray>(array)->InsertNextValue(value.ToChar());
-                break;
-
-            case VTK_DOUBLE:
-                vtkArrayDownCast<vtkDoubleArray>(array)->InsertNextValue(value.ToDouble());
-                break;
-
-            case VTK_INT:
-                vtkArrayDownCast<vtkIntArray>(array)->InsertNextValue(value.ToInt());
-                break;
-
-            case VTK_STRING:
-                vtkArrayDownCast<vtkStringArray>(array)->InsertNextValue(value.ToString());
-                break;
-        }
-    }
-}
-
-//----------------------------------------------------------------------------
 vtkMyCityJSONReader::vtkMyCityJSONReader() {
     this->FileName = nullptr;
     this->StringInput = nullptr;
@@ -361,33 +229,7 @@ vtkMyCityJSONReader::~vtkMyCityJSONReader() {
 }
 
 //----------------------------------------------------------------------------
-void vtkMyCityJSONReader::AddFeatureProperty(const char *name, vtkVariant &typeAndDefaultValue) {
-    CityJSONReaderInternal::CityJSONProperty property;
-
-    // Traverse internal list checking if name already used
-    std::vector<CityJSONReaderInternal::CityJSONProperty>::iterator iter = this->Internal->PropertySpecs.begin();
-    for (; iter != this->Internal->PropertySpecs.end(); ++iter) {
-        if (iter->Name == name) {
-            vtkGenericWarningMacro(<< "Overwriting property spec for name " << name);
-            property.Name = name;
-            property.Value = typeAndDefaultValue;
-            *iter = property;
-            break;
-        }
-    }
-
-    // If not found, add to list
-    if (iter == this->Internal->PropertySpecs.end()) {
-        property.Name = name;
-        property.Value = typeAndDefaultValue;
-        this->Internal->PropertySpecs.push_back(property);
-        vtkDebugMacro(<< "Added feature property " << property.Name);
-    }
-}
-
-//----------------------------------------------------------------------------
-int vtkMyCityJSONReader::RequestData(vtkInformation * vtkNotUsed(request),
-                                     vtkInformationVector ** vtkNotUsed(request), vtkInformationVector *outputVector) {
+int vtkMyCityJSONReader::RequestData(vtkInformation * vtkNotUsed(request), vtkInformationVector ** vtkNotUsed(request), vtkInformationVector *outputVector) {
     // Get the info object
     vtkInformation *outInfo = outputVector->GetInformationObject(0);
 
@@ -396,7 +238,7 @@ int vtkMyCityJSONReader::RequestData(vtkInformation * vtkNotUsed(request),
 
     // Parse either string input of file, depending on mode
     Json::Value root;
-    int parseResult = 0;
+    int parseResult;
     if (this->StringInputMode) {
         parseResult = this->Internal->CanParseString(this->StringInput, root);
     } else {
@@ -407,20 +249,9 @@ int vtkMyCityJSONReader::RequestData(vtkInformation * vtkNotUsed(request),
         return VTK_ERROR;
     }
 
-    // If parsed successfully into Json, then convert it
-    // into appropriate vtkPolyData
+    // If parsed successfully into Json, then convert it into appropriate vtkPolyData
     if (root.isObject()) {
-        this->Internal->ParseRoot(
-                root, output, this->OutlinePolygons, this->SerializedPropertiesArrayName);
-
-        // Convert Concave Polygons to convex polygons using triangulation
-        if (output->GetNumberOfPolys() && this->TriangulatePolygons) {
-            vtkNew<vtkTriangleFilter> filter;
-            filter->SetInputData(output);
-            filter->Update();
-
-            output->ShallowCopy(filter->GetOutput());
-        }
+        this->Internal->ParseRoot(root, output, this->OutlinePolygons, this->SerializedPropertiesArrayName);
     }
     return VTK_OK;
 }
