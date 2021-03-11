@@ -3,8 +3,9 @@
         <ProxyGroup name="sources">
             <SourceProxy name="MyCityJSONReader" class="vtkMyCityJSONReader" label="MyCityJSON">
 
-                <Documentation long_help="Does stuff." short_help="Does more stuff.">
-                    Reads CityJSON files
+                <Documentation long_help="This plugin allows ParaView to load CityJSON files." short_help="Loads CityJSON files">
+                    Loads and parses CityJSON files into ParaView. Parses the CityJSON files into points, inserts these,
+                    then parses the boundaries of each CityObject into polygons and references the points inserted earlier.
                 </Documentation>
 
                 <StringVectorProperty
