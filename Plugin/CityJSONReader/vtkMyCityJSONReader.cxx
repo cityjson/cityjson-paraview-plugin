@@ -54,12 +54,6 @@ void vtkMyCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &r
     vtkNew<vtkCellArray> polys;
     output->SetPolys(polys);
 
-    // Initialize vertex-id array
-    vtkIntArray *vertexIdArray = vtkIntArray::New();
-    vertexIdArray->SetName("vertex-id");
-    output->GetCellData()->AddArray(vertexIdArray);
-    vertexIdArray->Delete();
-
     // Check type
     Json::Value rootType = root["type"];
     if (rootType.isNull()) {

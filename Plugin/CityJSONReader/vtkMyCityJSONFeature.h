@@ -16,7 +16,7 @@ public:
 
 vtkTypeMacro(vtkMyCityJSONFeature, vtkDataObject);
 
-    void ExtractVertices(const Json::Value &vertices, vtkPolyData *outputData);
+    static void ExtractVertices(const Json::Value &vertices, vtkPolyData *outputData);
 
     vtkPolyData *ConnectTheDots(const Json::Value &cityObject, vtkPolyData *outputData);
 
@@ -30,8 +30,6 @@ protected:
  * from which the geometry and properties are to be extracted
  */
     Json::Value featureRoot;
-
-    std::vector<std::vector<double>> allVertices;
 
 private:
     vtkMyCityJSONFeature(const vtkMyCityJSONFeature &) = delete;

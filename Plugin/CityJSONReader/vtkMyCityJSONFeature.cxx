@@ -38,7 +38,7 @@ vtkMyCityJSONFeature::vtkMyCityJSONFeature() = default;
 //----------------------------------------------------------------------------
 vtkMyCityJSONFeature::~vtkMyCityJSONFeature() = default;
 
-// NEW ----
+// Get boundaries for each object and insert polygons that reference each inserted point
 vtkPolyData *vtkMyCityJSONFeature::ConnectTheDots(const Json::Value &cityObject, vtkPolyData *outputData) {
 
     if (cityObject.isNull()){
@@ -72,31 +72,17 @@ vtkPolyData *vtkMyCityJSONFeature::ConnectTheDots(const Json::Value &cityObject,
 }
 
 
-// NEW ----
+// Extract all vertices and insert them into points. Optionally also as (visible) vertices
 void vtkMyCityJSONFeature::ExtractVertices(const Json::Value &vertices, vtkPolyData *outputData) {
 
     vtkPoints *points = outputData->GetPoints();
     vtkCellArray* verts = outputData->GetVerts();
 
-    vtkAbstractArray *array = outputData->GetCellData()->GetAbstractArray("vertex-id");
-    auto *ids = vtkArrayDownCast<vtkIntArray>(array);
-
-    for (Json::Value vertex : vertices){
-        this->allVertices.push_back(std::vector<double>{vertex[0].asDouble(), vertex[1].asDouble(), vertex[2].asDouble()});
-    }
-
-    points->SetNumberOfPoints(allVertices.size());
-
-    int currentVertexId = 0;
-    for (auto vertex : allVertices) {
-        points->InsertPoint(currentVertexId, vertex[0], vertex[1], vertex[2]);
+    for (Json::Value vertex : vertices) {
+        vtkIdType vertexId = points->InsertNextPoint(vertex[0].asDouble(), vertex[1].asDouble(), vertex[2].asDouble());
 
         // Uncomment to show vertices
-//        vtkIdType id = currentVertexId;
-//        verts->InsertNextCell(1, &id);
-
-        ids->InsertNextValue(currentVertexId);
-        currentVertexId++;
+//        verts->InsertNextCell(1, &vertexId);
     }
 
 }
