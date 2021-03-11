@@ -28,11 +28,6 @@ protected:
     int RequestData(vtkInformation* request, vtkInformationVector** inputVector, vtkInformationVector* outputVector) override;
 
     char* FileName;
-    char* StringInput;
-    bool StringInputMode;
-    bool TriangulatePolygons;
-    bool OutlinePolygons;
-    char* SerializedPropertiesArrayName;
 
 private:
     class CityJSONReaderInternal;

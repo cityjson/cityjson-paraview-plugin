@@ -31,30 +31,18 @@ vtkStandardNewMacro(vtkMyCityJSONReader);
 //----------------------------------------------------------------------------
 class vtkMyCityJSONReader::CityJSONReaderInternal {
 public:
-    typedef struct {
-        std::string Name;
-        vtkVariant Value;
-    } CityJSONProperty;
-
-    // List of property names to read. Property value is used the default
-    std::vector<CityJSONProperty> PropertySpecs;
 
     // Parse the Json Value corresponding to the root of the CityJSON data from the file
-    void ParseRoot(const Json::Value &root, vtkPolyData *output, bool outlinePolygons,
-                   const char *serializedPropertiesArrayName);
+    static void ParseRoot(const Json::Value &root, vtkPolyData *output);
 
     // Verify if file exists and can be read by the parser
     // If exists, parse into Jsoncpp data structure
     static int CanParseFile(const char *filename, Json::Value &root);
 
-    // Verify if string can be read by the parser
-    // If exists, parse into Jsoncpp data structure
-    static int CanParseString(char *input, Json::Value &root);
-
 };
 
 //----------------------------------------------------------------------------
-void vtkMyCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &root, vtkPolyData *output, bool outlinePolygons, const char *serializedPropertiesArrayName) {
+void vtkMyCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &root, vtkPolyData *output) {
     // Initialize geometry containers
     vtkNew<vtkPoints> points;
     points->SetDataTypeToDouble();
@@ -62,9 +50,6 @@ void vtkMyCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &r
 
     vtkNew<vtkCellArray> verts;
     output->SetVerts(verts);
-
-    vtkNew<vtkCellArray> lines;
-    output->SetLines(lines);
 
     vtkNew<vtkCellArray> polys;
     output->SetPolys(polys);
@@ -74,50 +59,6 @@ void vtkMyCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &r
     vertexIdArray->SetName("vertex-id");
     output->GetCellData()->AddArray(vertexIdArray);
     vertexIdArray->Delete();
-
-    // Initialize properties arrays
-    if (serializedPropertiesArrayName) {
-        vtkStringArray *propertiesArray = vtkStringArray::New();
-        propertiesArray->SetName(serializedPropertiesArrayName);
-        output->GetCellData()->AddArray(propertiesArray);
-        propertiesArray->Delete();
-    }
-
-    vtkAbstractArray *array;
-    auto iter = this->PropertySpecs.begin();
-    for (; iter != this->PropertySpecs.end(); ++iter) {
-        array = nullptr;
-        switch (iter->Value.GetType()) {
-            case VTK_BIT:
-                array = vtkBitArray::New();
-                break;
-
-            case VTK_INT:
-                array = vtkIntArray::New();
-                break;
-
-            case VTK_DOUBLE:
-                array = vtkDoubleArray::New();
-                break;
-
-            case VTK_STRING:
-                array = vtkStringArray::New();
-                break;
-
-            default:
-                vtkGenericWarningMacro("unexpected data type " << iter->Value.GetType());
-                break;
-        }
-
-        // Skip if array not created for some reason
-        if (!array) {
-            continue;
-        }
-
-        array->SetName(iter->Name.c_str());
-        output->GetCellData()->AddArray(array);
-        array->Delete();
-    }
 
     // Check type
     Json::Value rootType = root["type"];
@@ -184,39 +125,8 @@ int vtkMyCityJSONReader::CityJSONReaderInternal::CanParseFile(const char *filena
 }
 
 //----------------------------------------------------------------------------
-int vtkMyCityJSONReader::CityJSONReaderInternal::CanParseString(char *input, Json::Value &root) {
-    if (!input) {
-        vtkGenericWarningMacro(<< "Input string is empty");
-        return VTK_ERROR;
-    }
-
-    Json::CharReaderBuilder builder;
-    builder["collectComments"] = false;
-
-    std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-
-    std::string formattedErrors;
-
-    // parse the entire cityJSON data into the Json::Value root
-    bool parsedSuccess = reader->parse(input, input + strlen(input), &root, &formattedErrors);
-
-    if (!parsedSuccess) {
-        // Report failures and their locations in the document
-        vtkGenericWarningMacro(<< "Failed to parse JSON" << endl << formattedErrors);
-        return VTK_ERROR;
-    }
-
-    return VTK_OK;
-}
-
-//----------------------------------------------------------------------------
 vtkMyCityJSONReader::vtkMyCityJSONReader() {
     this->FileName = nullptr;
-    this->StringInput = nullptr;
-    this->StringInputMode = false;
-    this->TriangulatePolygons = false;
-    this->OutlinePolygons = false;
-    this->SerializedPropertiesArrayName = nullptr;
     this->SetNumberOfInputPorts(0);
     this->SetNumberOfOutputPorts(1);
     this->Internal = new CityJSONReaderInternal;
@@ -239,11 +149,7 @@ int vtkMyCityJSONReader::RequestData(vtkInformation * vtkNotUsed(request), vtkIn
     // Parse either string input of file, depending on mode
     Json::Value root;
     int parseResult;
-    if (this->StringInputMode) {
-        parseResult = this->Internal->CanParseString(this->StringInput, root);
-    } else {
-        parseResult = this->Internal->CanParseFile(this->FileName, root);
-    }
+    parseResult = this->Internal->CanParseFile(this->FileName, root);
 
     if (parseResult != VTK_OK) {
         return VTK_ERROR;
@@ -251,7 +157,7 @@ int vtkMyCityJSONReader::RequestData(vtkInformation * vtkNotUsed(request), vtkIn
 
     // If parsed successfully into Json, then convert it into appropriate vtkPolyData
     if (root.isObject()) {
-        this->Internal->ParseRoot(root, output, this->OutlinePolygons, this->SerializedPropertiesArrayName);
+        this->Internal->ParseRoot(root, output);
     }
     return VTK_OK;
 }
