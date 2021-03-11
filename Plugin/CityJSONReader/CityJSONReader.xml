@@ -1,7 +1,7 @@
 <ParaViewPlugin>
     <ServerManagerConfiguration>
         <ProxyGroup name="sources">
-            <SourceProxy name="MyCityJSONReader" class="vtkMyCityJSONReader" label="MyCityJSON">
+            <SourceProxy name="CityJSONReader" class="vtkCityJSONReader" label="CityJSON">
 
                 <Documentation long_help="This plugin allows ParaView to load CityJSON files." short_help="Loads CityJSON files">
                     Loads and parses CityJSON files into ParaView. Parses the CityJSON files into points, inserts these,

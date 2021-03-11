@@ -1,16 +1,16 @@
-#ifndef vtkMyCityJSONReader_h
-#define vtkMyCityJSONReader_h
+#ifndef vtkCityJSONReader_h
+#define vtkCityJSONReader_h
 
 #include "vtkIOCityJSONModule.h" // for export macro
 #include "vtkPolyDataAlgorithm.h"
 
 class vtkPolyData;
 
-class VTKIOCITYJSON_EXPORT vtkMyCityJSONReader : public vtkPolyDataAlgorithm
+class VTKIOCITYJSON_EXPORT vtkCityJSONReader : public vtkPolyDataAlgorithm
 {
 public:
-    static vtkMyCityJSONReader* New();
-    vtkTypeMacro(vtkMyCityJSONReader, vtkPolyDataAlgorithm);
+    static vtkCityJSONReader* New();
+    vtkTypeMacro(vtkCityJSONReader, vtkPolyDataAlgorithm);
     void PrintSelf(ostream& os, vtkIndent indent) override;
 
     //@{
@@ -22,8 +22,8 @@ public:
     //@}
 
 protected:
-    vtkMyCityJSONReader();
-    ~vtkMyCityJSONReader() override;
+    vtkCityJSONReader();
+    ~vtkCityJSONReader() override;
 
     int RequestData(vtkInformation* request, vtkInformationVector** inputVector, vtkInformationVector* outputVector) override;
 
@@ -33,8 +33,8 @@ private:
     class CityJSONReaderInternal;
     CityJSONReaderInternal* Internal;
 
-    vtkMyCityJSONReader(const vtkMyCityJSONReader&) = delete;
-    void operator=(const vtkMyCityJSONReader&) = delete;
+    vtkCityJSONReader(const vtkCityJSONReader&) = delete;
+    void operator=(const vtkCityJSONReader&) = delete;
 };
 
 #endif

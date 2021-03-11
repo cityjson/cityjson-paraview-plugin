@@ -2,7 +2,7 @@
 // Created by maarten on 11-08-20.
 //
 
-#include "vtkMyCityJSONReader.h"
+#include "vtkCityJSONReader.h"
 
 // VTK Includes
 #include "vtkAbstractArray.h"
@@ -10,7 +10,7 @@
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
 #include "vtkDoubleArray.h"
-#include "vtkMyCityJSONFeature.h"
+#include "vtkCityJSONFeature.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkIntArray.h"
@@ -26,10 +26,10 @@
 #include <iostream>
 
 
-vtkStandardNewMacro(vtkMyCityJSONReader);
+vtkStandardNewMacro(vtkCityJSONReader);
 
 //----------------------------------------------------------------------------
-class vtkMyCityJSONReader::CityJSONReaderInternal {
+class vtkCityJSONReader::CityJSONReaderInternal {
 public:
 
     // Parse the Json Value corresponding to the root of the CityJSON data from the file
@@ -42,7 +42,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-void vtkMyCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &root, vtkPolyData *output) {
+void vtkCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &root, vtkPolyData *output) {
     // Initialize geometry containers
     vtkNew<vtkPoints> points;
     points->SetDataTypeToDouble();
@@ -63,7 +63,7 @@ void vtkMyCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &r
         vtkGenericWarningMacro(<< "ParseRoot: \"type\" is not \"CityJSON\"");
     }
 
-    vtkNew<vtkMyCityJSONFeature> feature;
+    vtkNew<vtkCityJSONFeature> feature;
 
     // Parse vertices
     Json::Value rootVertices = root["vertices"];
@@ -87,7 +87,7 @@ void vtkMyCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &r
 
 
 //----------------------------------------------------------------------------
-int vtkMyCityJSONReader::CityJSONReaderInternal::CanParseFile(const char *filename, Json::Value &root) {
+int vtkCityJSONReader::CityJSONReaderInternal::CanParseFile(const char *filename, Json::Value &root) {
     if (!filename) {
         vtkGenericWarningMacro(<< "Input filename not specified");
         return VTK_ERROR;
@@ -119,7 +119,7 @@ int vtkMyCityJSONReader::CityJSONReaderInternal::CanParseFile(const char *filena
 }
 
 //----------------------------------------------------------------------------
-vtkMyCityJSONReader::vtkMyCityJSONReader() {
+vtkCityJSONReader::vtkCityJSONReader() {
     this->FileName = nullptr;
     this->SetNumberOfInputPorts(0);
     this->SetNumberOfOutputPorts(1);
@@ -127,13 +127,13 @@ vtkMyCityJSONReader::vtkMyCityJSONReader() {
 }
 
 //----------------------------------------------------------------------------
-vtkMyCityJSONReader::~vtkMyCityJSONReader() {
+vtkCityJSONReader::~vtkCityJSONReader() {
     delete[] FileName;
     delete Internal;
 }
 
 //----------------------------------------------------------------------------
-int vtkMyCityJSONReader::RequestData(vtkInformation * vtkNotUsed(request), vtkInformationVector ** vtkNotUsed(request), vtkInformationVector *outputVector) {
+int vtkCityJSONReader::RequestData(vtkInformation * vtkNotUsed(request), vtkInformationVector ** vtkNotUsed(request), vtkInformationVector *outputVector) {
     // Get the info object
     vtkInformation *outInfo = outputVector->GetInformationObject(0);
 
@@ -157,7 +157,7 @@ int vtkMyCityJSONReader::RequestData(vtkInformation * vtkNotUsed(request), vtkIn
 }
 
 //----------------------------------------------------------------------------
-void vtkMyCityJSONReader::PrintSelf(ostream &os, vtkIndent indent) {
+void vtkCityJSONReader::PrintSelf(ostream &os, vtkIndent indent) {
     Superclass::PrintSelf(os, indent);
     os << "vtkCityJSONReader" << std::endl;
     os << "Filename: " << this->FileName << std::endl;

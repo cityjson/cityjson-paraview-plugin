@@ -1,4 +1,4 @@
-#include "vtkMyCityJSONFeature.h"
+#include "vtkCityJSONFeature.h"
 
 // VTK Includes
 #include "vtkCellArray.h"
@@ -15,7 +15,7 @@
 #include <sstream>
 #include <string>
 
-vtkStandardNewMacro(vtkMyCityJSONFeature);
+vtkStandardNewMacro(vtkCityJSONFeature);
 
 namespace {
     vtkOStreamWrapper &operator<<(vtkOStreamWrapper &os, const Json::Value &root) {
@@ -29,13 +29,13 @@ namespace {
     }
 }
 
-vtkMyCityJSONFeature::vtkMyCityJSONFeature() = default;
+vtkCityJSONFeature::vtkCityJSONFeature() = default;
 
 //----------------------------------------------------------------------------
-vtkMyCityJSONFeature::~vtkMyCityJSONFeature() = default;
+vtkCityJSONFeature::~vtkCityJSONFeature() = default;
 
 // Get boundaries for each object and insert polygons that reference each inserted point
-vtkPolyData *vtkMyCityJSONFeature::ConnectTheDots(const Json::Value &cityObject, vtkPolyData *outputData) {
+vtkPolyData *vtkCityJSONFeature::ConnectTheDots(const Json::Value &cityObject, vtkPolyData *outputData) {
 
     if (cityObject.isNull()){
         vtkErrorMacro(<< "Geometry node is missing!");
@@ -78,7 +78,7 @@ vtkPolyData *vtkMyCityJSONFeature::ConnectTheDots(const Json::Value &cityObject,
 
 
 // Extract all vertices and insert them into points. Optionally also as (visible) vertices
-void vtkMyCityJSONFeature::ExtractVertices(const Json::Value &vertices, vtkPolyData *outputData) {
+void vtkCityJSONFeature::ExtractVertices(const Json::Value &vertices, vtkPolyData *outputData) {
 
     vtkPoints *points = outputData->GetPoints();
     vtkCellArray* verts = outputData->GetVerts();
@@ -93,7 +93,7 @@ void vtkMyCityJSONFeature::ExtractVertices(const Json::Value &vertices, vtkPolyD
 }
 
 //----------------------------------------------------------------------------
-void vtkMyCityJSONFeature::PrintSelf(ostream &os, vtkIndent indent) {
+void vtkCityJSONFeature::PrintSelf(ostream &os, vtkIndent indent) {
     Superclass::PrintSelf(os, indent);
     os << indent << "vtkCityJSONFeature" << std::endl;
     os << indent << "Root: ";

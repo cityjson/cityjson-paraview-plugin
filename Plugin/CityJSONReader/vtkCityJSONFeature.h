@@ -1,5 +1,5 @@
-#ifndef vtkMyCityJSONFeature_h
-#define vtkMyCityJSONFeature_h
+#ifndef vtkCityJSONFeature_h
+#define vtkCityJSONFeature_h
 
 // VTK Includes
 #include "vtkDataObject.h"
@@ -8,22 +8,22 @@
 
 class vtkPolyData;
 
-class VTKIOCITYJSON_EXPORT vtkMyCityJSONFeature : public vtkDataObject {
+class VTKIOCITYJSON_EXPORT vtkCityJSONFeature : public vtkDataObject {
 public:
-    static vtkMyCityJSONFeature *New();
+    static vtkCityJSONFeature *New();
 
     void PrintSelf(ostream &os, vtkIndent indent) override;
 
-vtkTypeMacro(vtkMyCityJSONFeature, vtkDataObject);
+vtkTypeMacro(vtkCityJSONFeature, vtkDataObject);
 
     static void ExtractVertices(const Json::Value &vertices, vtkPolyData *outputData);
 
     vtkPolyData *ConnectTheDots(const Json::Value &cityObject, vtkPolyData *outputData);
 
 protected:
-    vtkMyCityJSONFeature();
+    vtkCityJSONFeature();
 
-    ~vtkMyCityJSONFeature() override;
+    ~vtkCityJSONFeature() override;
 
 /**
  * Json::Value featureRoot corresponds to the root of the CityJSON feature
@@ -32,9 +32,9 @@ protected:
     Json::Value featureRoot;
 
 private:
-    vtkMyCityJSONFeature(const vtkMyCityJSONFeature &) = delete;
+    vtkCityJSONFeature(const vtkCityJSONFeature &) = delete;
 
-    void operator=(const vtkMyCityJSONFeature &) = delete;
+    void operator=(const vtkCityJSONFeature &) = delete;
 };
 
 #endif // vtkCityJSONFeature_h
