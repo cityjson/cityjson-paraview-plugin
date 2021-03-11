@@ -1,12 +1,9 @@
 #include "vtkMyCityJSONFeature.h"
 
 // VTK Includes
-#include "vtkAbstractArray.h"
-#include "vtkBitArray.h"
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
 #include "vtkDoubleArray.h"
-#include "vtkIntArray.h"
 #include "vtkLine.h"
 #include "vtkNew.h"
 #include "vtkObjectFactory.h"
@@ -14,7 +11,6 @@
 #include "vtkPolyData.h"
 #include "vtkPolyLine.h"
 #include "vtkPolygon.h"
-#include "vtkStringArray.h"
 
 #include <sstream>
 #include <string>
@@ -50,6 +46,11 @@ vtkPolyData *vtkMyCityJSONFeature::ConnectTheDots(const Json::Value &cityObject,
         for (Json::Value boundary : geometry["boundaries"]) {
             for (Json::Value element : boundary) {
                 for (Json::Value vertices : element) {
+
+                    // Sometimes vertices is a layer shallower than other times, so go back a layer in that case
+                    if (vertices.isInt()) {
+                        vertices = element;
+                    }
 
                     vtkCellArray *polys = outputData->GetPolys();
                     vtkNew<vtkPolygon> poly;
