@@ -81,8 +81,8 @@ void vtkMyCityJSONFeature::ExtractVertices(const Json::Value &vertices, vtkPolyD
     for (Json::Value vertex : vertices) {
         vtkIdType vertexId = points->InsertNextPoint(vertex[0].asDouble(), vertex[1].asDouble(), vertex[2].asDouble());
 
-        // Uncomment to show vertices
-//        verts->InsertNextCell(1, &vertexId);
+        // Comment to hide vertices
+        verts->InsertNextCell(1, &vertexId);
     }
 
 }
