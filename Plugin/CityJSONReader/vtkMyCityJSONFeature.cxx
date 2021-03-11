@@ -46,25 +46,29 @@ vtkPolyData *vtkMyCityJSONFeature::ConnectTheDots(const Json::Value &cityObject,
         return nullptr;
     }
 
-    for (Json::Value boundary : cityObject["geometry"][0]["boundaries"][0]) {
-        for (Json::Value vertices : boundary) {
+    for (Json::Value geometry : cityObject["geometry"]) {
+        for (Json::Value boundary : geometry["boundaries"]) {
+            for (Json::Value element : boundary) {
+                for (Json::Value vertices : element) {
 
-            vtkCellArray *polys = outputData->GetPolys();
-            vtkNew<vtkPolygon> poly;
-            vtkIdList* polyPointIds = poly->GetPointIds();
+                    vtkCellArray *polys = outputData->GetPolys();
+                    vtkNew<vtkPolygon> poly;
+                    vtkIdList *polyPointIds = poly->GetPointIds();
 
-            if (vertices.empty()) {
-                continue;
+                    if (vertices.empty()) {
+                        continue;
+                    }
+
+                    // For each vertex id in the boundary list, insert and add to poly
+                    for (Json::Value boundaryVertexId : vertices) {
+                        polyPointIds->InsertNextId(boundaryVertexId.asInt());
+                    }
+
+                    polyPointIds->SetNumberOfIds(vertices.size());
+                    polys->InsertNextCell(poly);
+
+                }
             }
-
-            // For each vertex id in the boundary list, insert and add to poly
-            for (Json::Value boundaryVertexId : vertices){
-                polyPointIds->InsertNextId(boundaryVertexId.asInt());
-            }
-
-            polyPointIds->SetNumberOfIds(vertices.size());
-            polys->InsertNextCell(poly);
-
         }
     }
 
