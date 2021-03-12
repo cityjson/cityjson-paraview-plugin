@@ -2,6 +2,8 @@
 
 A plugin that allows you to read CityJSON files directly into ParaView for modeling.
 
+https://github.com/cityjson
+
 https://www.cityjson.org/
 
 https://3d.bk.tudelft.nl/
