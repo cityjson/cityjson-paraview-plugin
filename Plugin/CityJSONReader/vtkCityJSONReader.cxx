@@ -1,29 +1,22 @@
-//
-// Created by maarten on 11-08-20.
-//
-
 #include "vtkCityJSONReader.h"
 
 // VTK Includes
-#include "vtkAbstractArray.h"
-#include "vtkBitArray.h"
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
 #include "vtkDoubleArray.h"
 #include "vtkCityJSONFeature.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
-#include "vtkIntArray.h"
 #include "vtkNew.h"
 #include "vtkObjectFactory.h"
 #include "vtkPolyData.h"
-#include "vtkStringArray.h"
-#include "vtkTriangleFilter.h"
 #include "vtk_jsoncpp.h"
 #include "vtksys/FStream.hxx"
 
 // C++ includes
 #include <iostream>
+#include <vtkStringArray.h>
+#include <iosfwd>
 
 
 vtkStandardNewMacro(vtkCityJSONReader);
@@ -48,11 +41,14 @@ void vtkCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &roo
     points->SetDataTypeToDouble();
     output->SetPoints(points);
 
-    vtkNew<vtkCellArray> verts;
-    output->SetVerts(verts);
-
     vtkNew<vtkCellArray> polys;
     output->SetPolys(polys);
+
+    // Initialize object-type array used to store object type names
+    vtkStringArray *objectTypeArray = vtkStringArray::New();
+    objectTypeArray->SetName("object-type");
+    output->GetCellData()->AddArray(objectTypeArray);
+    objectTypeArray->Delete();
 
     // Check type
     Json::Value rootType = root["type"];
