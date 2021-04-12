@@ -38,6 +38,7 @@ vtkCityJSONFeature::~vtkCityJSONFeature() = default;
 // Get boundaries for each object and insert polygons that reference each inserted point
 vtkPolyData *vtkCityJSONFeature::ConnectTheDots(const Json::Value &cityObject, vtkPolyData *outputData) {
 
+    // Shouldn't be triggered, but in the rare case that we receive an empty cityObject object we can't move on
     if (cityObject.isNull()){
         vtkErrorMacro(<< "Geometry node is missing!");
         return nullptr;
@@ -49,28 +50,35 @@ vtkPolyData *vtkCityJSONFeature::ConnectTheDots(const Json::Value &cityObject, v
     // Store type of this object for later use
     std::string objectType = cityObject["type"].asString();
 
+    // Loop through all the possible combinations of geometries and TIN
     for (Json::Value geometry : cityObject["geometry"]) {
         for (Json::Value boundary : geometry["boundaries"]) {
             for (Json::Value element : boundary) {
                 for (Json::Value vertices : element) {
+
                     // Sometimes vertices is a layer shallower than other times, so go back a layer in that case
                     if (vertices.isInt()) {
                         vertices = element;
                     }
 
+                    // Ensure there are vertices in this city Object, otherwise skip this city Object
                     if (vertices.empty()) {
                         continue;
                     }
 
+                    // Create a new vtkPolygon that will hold the vertices found in this city Object
                     vtkNew<vtkPolygon> poly;
                     vtkIdList *polyPointIds = poly->GetPointIds();
 
                     // Set the object type of this polygon to the 'type' taken from CityJSON file
+                    // This ensures that the TIN Relief and Building(parts)s are separate object-type's when loading
                     vtkAbstractArray *array = outputData->GetCellData()->GetAbstractArray("object-type");
                     auto *ids = vtkArrayDownCast<vtkStringArray>(array);
                     ids->InsertNextValue(objectType);
 
                     // For each vertex id in the boundary list, insert and add to poly
+                    // This assumes the input cityJSON is valid, otherwise it might attempt to reference non-existing
+                    // vertices, or mismatched vertices
                     for (Json::Value boundaryVertexId : vertices) {
                         polyPointIds->InsertNextId(boundaryVertexId.asInt());
                     }

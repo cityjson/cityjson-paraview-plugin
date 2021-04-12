@@ -50,7 +50,7 @@ void vtkCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &roo
     output->GetCellData()->AddArray(objectTypeArray);
     objectTypeArray->Delete();
 
-    // Check type
+    // Check type of root to ensure we're looking at a CityJSON file
     Json::Value rootType = root["type"];
     if (rootType.isNull()) {
         vtkGenericWarningMacro(<< "ParseRoot: Missing type node");
@@ -59,23 +59,26 @@ void vtkCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &roo
         vtkGenericWarningMacro(<< "ParseRoot: \"type\" is not \"CityJSON\"");
     }
 
+    // ctkCityJSONFeature is the class that parses all the relevant data, so creating this here then calling later
     vtkNew<vtkCityJSONFeature> feature;
 
-    // Parse vertices
+    // Ensure there is a 'vertices' element in this CityJSON at all, without it we can't move on
     Json::Value rootVertices = root["vertices"];
     if (!rootVertices.isArray()) {
         vtkGenericWarningMacro(<< "ParseRoot: \"vertices\" not of type \"array\"");
     } else {
+        // Parse vertices
         feature->ExtractVertices(rootVertices, output);
-
     }
 
-    // Parse polygons
+    // Ensure there is a 'cityObjects' element in this CityJSON at all, without it we can't move on
+    // This element contains the definitions of objects in the CityJSON references to vertex id's
     Json::Value rootCityObjects = root["CityObjects"];
     if (rootCityObjects.isNull()) {
         vtkGenericWarningMacro(<< "ParseRoot: Missing \"CityObjects\" node");
     } else {
-        for (Json::Value cityObject : rootCityObjects) {  // GUID_Something
+        // For each city Object; parse its polygons
+        for (Json::Value cityObject : rootCityObjects) {
             feature->ConnectTheDots(cityObject, output);
         }
     }
@@ -83,6 +86,7 @@ void vtkCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &roo
 
 
 //----------------------------------------------------------------------------
+// Function that determines if the file can be parsed using a few checks
 int vtkCityJSONReader::CityJSONReaderInternal::CanParseFile(const char *filename, Json::Value &root) {
     if (!filename) {
         vtkGenericWarningMacro(<< "Input filename not specified");
@@ -129,6 +133,7 @@ vtkCityJSONReader::~vtkCityJSONReader() {
 }
 
 //----------------------------------------------------------------------------
+// "Main" function called when a file is loaded that is CityJSON
 int vtkCityJSONReader::RequestData(vtkInformation * vtkNotUsed(request), vtkInformationVector ** vtkNotUsed(request), vtkInformationVector *outputVector) {
     // Get the info object
     vtkInformation *outInfo = outputVector->GetInformationObject(0);
@@ -136,7 +141,7 @@ int vtkCityJSONReader::RequestData(vtkInformation * vtkNotUsed(request), vtkInfo
     // Get the output
     vtkPolyData *output = vtkPolyData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
-    // Parse either string input of file, depending on mode
+    // Parse either string input or file, depending on mode
     Json::Value root;
     int parseResult;
     parseResult = this->Internal->CanParseFile(this->FileName, root);
