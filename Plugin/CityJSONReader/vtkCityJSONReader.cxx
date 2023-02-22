@@ -3,6 +3,7 @@
 // VTK Includes
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
+#include "vtkFloatArray.h"
 #include "vtkDoubleArray.h"
 #include "vtkCityJSONFeature.h"
 #include "vtkInformation.h"
@@ -49,6 +50,12 @@ void vtkCityJSONReader::CityJSONReaderInternal::ParseRoot(const Json::Value &roo
     objectTypeArray->SetName("object-type");
     output->GetCellData()->AddArray(objectTypeArray);
     objectTypeArray->Delete();
+
+     // Initialize lod array used to store object type names
+    vtkFloatArray *lodArray = vtkFloatArray::New();
+    lodArray->SetName("lod");
+    output->GetCellData()->AddArray(lodArray);
+    lodArray->Delete();
 
     // Check type of root to ensure we're looking at a CityJSON file
     Json::Value rootType = root["type"];
