@@ -3,6 +3,7 @@
 // VTK Includes
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
+#include "vtkFloatArray.h"
 #include "vtkDoubleArray.h"
 #include "vtkLine.h"
 #include "vtkNew.h"
@@ -52,6 +53,9 @@ vtkPolyData *vtkCityJSONFeature::ConnectTheDots(const Json::Value &cityObject, v
 
     // Loop through all the possible combinations of geometries and TIN
     for (Json::Value geometry : cityObject["geometry"]) {
+        // Store lod of this object for later use
+        float lod = std::stof(geometry["lod"].asString());
+
         for (Json::Value boundary : geometry["boundaries"]) {
             for (Json::Value element : boundary) {
                 for (Json::Value vertices : element) {
@@ -72,9 +76,15 @@ vtkPolyData *vtkCityJSONFeature::ConnectTheDots(const Json::Value &cityObject, v
 
                     // Set the object type of this polygon to the 'type' taken from CityJSON file
                     // This ensures that the TIN Relief and Building(parts)s are separate object-type's when loading
-                    vtkAbstractArray *array = outputData->GetCellData()->GetAbstractArray("object-type");
-                    auto *ids = vtkArrayDownCast<vtkStringArray>(array);
-                    ids->InsertNextValue(objectType);
+                    vtkAbstractArray *objectTypeArray = outputData->GetCellData()->GetAbstractArray("object-type");
+                    auto *objectTypeIds = vtkArrayDownCast<vtkStringArray>(objectTypeArray);
+                    objectTypeIds->InsertNextValue(objectType);
+
+                    // Set the lod attribute of this polygon to the 'lod' taken from CityJSON file
+                    // This enables filtering by lod if needed (as CityJSON can contain several LoDs)
+                    vtkDataArray *lodArray = outputData->GetCellData()->GetArray("lod");
+                    auto *lodIds = vtkArrayDownCast<vtkFloatArray>(lodArray);
+                    lodIds->InsertNextValue(lod);
 
                     // For each vertex id in the boundary list, insert and add to poly
                     // This assumes the input cityJSON is valid, otherwise it might attempt to reference non-existing
